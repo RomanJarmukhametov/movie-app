@@ -1,9 +1,7 @@
 <!-- HomeView.vue -->
 <script setup>
 // Import necessary functions from Vue
-import { onMounted, ref } from 'vue'
-
-import { reactive } from 'vue'
+import { onMounted, ref, reactive } from 'vue'
 
 // Import PostService
 import PostService from '/src/service/PostService.js'
@@ -71,7 +69,7 @@ console.log(movieDataArray.value[2])
         </div>
       </div>
     </div>
-    <div v-else>Loading...</div>
+    <div v-else class="loading">Loading movie list...</div>
   </div>
 </template>
 
@@ -101,6 +99,10 @@ console.log(movieDataArray.value[2])
 
 .card-text {
   color: #fff;
+}
+
+.loading {
+  color: #42b883;
 }
 
 .text-muted {
