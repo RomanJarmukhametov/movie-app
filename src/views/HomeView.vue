@@ -1,7 +1,11 @@
 <!-- HomeView.vue -->
 <script setup>
+import { useSearchStore } from '/src/store/searchStore.js'
+
 // Import necessary functions from Vue
 import { onMounted, ref, reactive } from 'vue'
+
+import MovieCard from '@/components/MovieCard.vue'
 
 // Import PostService
 import PostService from '/src/service/PostService.js'
@@ -20,6 +24,41 @@ const movieDataArray = reactive({ value: [] })
 //Define a reactive variable to check if data is loaded
 const dataLoaded = ref(false)
 
+
+// Define a function to search movies by name
+const search = ref('')
+
+// Fetch the searchStore
+const searchStore = useSearchStore()
+
+// Define a function to add a movie to the searchStore
+const searchMovies = async () => {
+  if (search.value != '') {
+    try {
+      const response = await PostService.searchMoviesByName(search.value)
+      if (response.data.Search) {
+        searchStore.setSearchResults(response.data.Search)
+        if (searchStore.searchResults.length) {
+          searchStore.setSearchSuccess(true)
+        } else {
+          searchStore.setSearchSuccess(false)
+        }
+      } else {
+        searchStore.setSearchResults([])
+        searchStore.setSearchSuccess(false)
+      }
+      search.value = ''
+      searchStore.setMovieSearched(true)
+    } catch (error) {
+      console.error('Error fetching movie data:', error)
+    }
+  }
+}
+
+const clearSearchResults = () => {
+  searchStore.clearSearchResults()
+}
+
 // Fetch data when the component is mounted taking movieId as a parameter from array of movie ids movieOMDBIds
 onMounted(async () => {
   for (let i = 0; i < movieOMDBIds.length; i++) {
@@ -31,86 +70,65 @@ onMounted(async () => {
     }
   }
   dataLoaded.value = true
-  // await nextTick()
 })
-
-console.log(movieDataArray.value)
-console.log(movieDataArray.value[2])
 </script>
 
 <template>
   <div class="container">
     <div class="row mt-5 mb-5">
       <div class="col">
-        <form @submit.prevent class="search-box">
-          <input type="text" placeholder="What are you looking for?" />
+        <form @submit.prevent="searchMovies()" class="search-box">
+          <input type="text" placeholder="What are you looking for?" v-model="search" />
           <input type="submit" value="Search" />
         </form>
       </div>
     </div>
 
-    <div class="row" v-if="dataLoaded">
-      <div class="row">
-        <div class="col" v-for="(movieData, index) in movieDataArray.value" :key="index">
+    <div class="row" v-if="searchStore.movieSearched">
+      <div class="row align-items-center">
+        <div class="col-10">
+          <h4>Search results</h4>
+        </div>
+        <div class="col-2 text-right">
+          <button class="btn btn-secondary" @click="clearSearchResults">Clear Search</button>
+        </div>
+      </div>
+      <div class="row" v-if="searchStore.searchSuccess">
+        <div class="col mt-3" v-for="(movieData, index) in searchStore.searchResults" :key="index">
+          <RouterLink :to="'/movie/' + movieData.imdbID">
+            <MovieCard
+              :poster="movieData.Poster"
+              :title="movieData.Title"
+              :text="movieData.Type"
+              :year="movieData.Year"
+            />
+          </RouterLink>
+        </div>
+      </div>
+      <div v-else class="loading">No results found</div>
+    </div>
+
+    <div class="row" v-if="dataLoaded && !searchStore.movieSearched">
+      <div class="row d-flex align-items-stretch">
+        <div class="col mt-3 mb-3" v-for="(movieData, index) in movieDataArray.value" :key="index">
           <RouterLink :to="'/movie/' + movieOMDBIds[index]">
-            <div class="card" style="width: 18rem">
-              <img :src="movieData.Poster" class="card-img-top" :alt="movieData.Title" />
-              <div class="card-body">
-                <h5 class="card-title">{{ movieData.Title }}</h5>
-                <p class="card-text">
-                  {{ movieData.Plot }}
-                </p>
-                <p class="card-text">
-                  <small class="text-muted"> Release Year: {{ movieData.Year }}</small>
-                </p>
-              </div>
-            </div>
+            <MovieCard
+              :poster="movieData.Poster"
+              :title="movieData.Title"
+              :text="movieData.Plot"
+              :year="movieData.Year"
+            />
           </RouterLink>
         </div>
       </div>
     </div>
-    <div v-else class="loading">Loading movie list...</div>
+    <div v-if="!dataLoaded" class="loading">Loading movie list...</div>
   </div>
 </template>
 
 <style scoped>
-.card {
-  background-color: #2c3d4e;
-  color: #fff;
-  border: none;
-  margin-top: 2rem;
-  border-radius: 8px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-}
-
-.card:hover {
-  transform: scale(1.02);
-  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
-}
-
-.card img {
-  border-radius: 8px 8px 0 0;
-}
-
-.card-title {
-  color: #42b883;
-}
-
-.card-text {
-  color: #fff;
-}
-
 .loading {
   color: #42b883;
-}
-
-.text-muted {
-  color: #aaa !important;
-}
-
-.card-body {
-  padding: 20px;
 }
 
 .search-box {
@@ -156,45 +174,5 @@ console.log(movieDataArray.value[2])
 
 .search-box input[type='submit']:active {
   background-color: #3b8070;
-}
-
-.movies-list {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0px 8px;
-}
-
-.movies-list .movie {
-  max-width: 50%;
-  flex: 1 1 50%;
-  padding: 16px 8px;
-}
-
-.movies-list .movie .movie-link {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.movies-list .movie .movie-link .product-image {
-  position: relative;
-  display: block;
-}
-
-.movies-list .movie .movie-link .product-image img {
-  display: block;
-  width: 100%;
-  height: 275px;
-  object-fit: cover;
-}
-
-.movies-list .movie .movie-link .product-image .type {
-  position: absolute;
-  padding: 8px 16px;
-  background-color: #42b883;
-  color: #fff;
-  bottom: 16px;
-  left: 0px;
-  text-transform: capitalize;
 }
 </style>

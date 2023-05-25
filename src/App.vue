@@ -47,4 +47,8 @@ header h1 {
 header h1 span {
   color: #42b883;
 }
+
+h4 {
+  color: #fff;
+}
 </style>

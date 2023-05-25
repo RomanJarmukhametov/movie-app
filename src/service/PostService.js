@@ -20,5 +20,11 @@ const apiClient = axios.create({
 export default {
   getMovie(id) {
     return apiClient.get('/', { params: { i: id, apiKey: apiKey } })
+  },
+  getFullMovie(id) {
+    return apiClient.get('/', { params: { i: id, apiKey: apiKey, plot: 'full' } })
+  },
+  searchMoviesByName(name) {
+    return apiClient.get('/', { params: { apikey: apiKey, s: name } })
   }
 }
