@@ -12,7 +12,6 @@ const route = useRoute()
 const dataLoaded = ref(false)
 
 onBeforeMount(async () => {
-  console.log('MovieDetailView onBeforeMount')
   try {
     const response = await PostService.getFullMovie(route.params.id)
     movie.value = response.data
@@ -35,7 +34,15 @@ onBeforeMount(async () => {
       <div class="row">
         <!-- Poster Column -->
         <div class="col-md-4">
-          <img class="card-img-top img-fluid" :src="movie.value.Poster" alt="Movie Poster" />
+          <img
+            class="card-img-top img-fluid"
+            :src="
+              movie.value.Poster === 'N/A'
+                ? '/src/assets/images/unavailable-image.jpg'
+                : movie.value.Poster
+            "
+            alt="Movie Poster"
+          />
         </div>
 
         <!-- Details Column -->

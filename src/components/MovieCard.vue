@@ -17,6 +17,10 @@ const props = defineProps({
   year: {
     type: String,
     required: true
+  },
+  genre: {
+    type: String,
+    required: true
   }
 })
 </script>
@@ -31,6 +35,9 @@ const props = defineProps({
       </p>
       <p class="card-text">
         <small class="text-muted"> Release Year: {{ props.year }}</small>
+      </p>
+      <p class="card-text">
+        <small class="text-muted"> Genre: {{ props.genre }}</small>
       </p>
     </div>
   </div>
