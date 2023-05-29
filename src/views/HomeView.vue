@@ -1,12 +1,14 @@
 <!-- HomeView.vue -->
 <script setup>
 // Import Vue Composition API and components
-import { onMounted, ref, reactive, watchEffect } from 'vue'
+import { onMounted, ref, reactive, watchEffect, watch } from 'vue'
 import MovieCard from '@/components/MovieCard.vue'
 import FormSelect from '@/components/FormSelect.vue'
 
 // Import services and data
 import PostService from '/src/service/PostService.js'
+import { fetchMovies } from '/src/service/movies.js'
+import { updateMoviesArray } from '/src/service/movies.js'
 import SourceData from '@/data.json'
 
 // Import Store
@@ -27,14 +29,7 @@ const dataLoaded = ref(false)
 
 // Fetch data when the component is mounted taking movieId as a parameter from array of movie ids movieOMDBIds
 onMounted(async () => {
-  for (let i = 0; i < movieOMDBIds.length; i++) {
-    try {
-      const response = await PostService.getMovie(movieOMDBIds[i])
-      movieDataArray.value.push(response.data)
-    } catch (error) {
-      console.error('Error fetching movie data:', error)
-    }
-  }
+  await fetchMovies(movieOMDBIds, movieDataArray)
   dataLoaded.value = true
 })
 //END OF SECTION FOR MOVIE DATA
@@ -131,6 +126,104 @@ const clearFilterResults = () => {
   selectedGenre.value = ''
 }
 //END OF SECTION FOR FILTERING MOVIES
+
+//START OF SECTION FOR SORTING MOVIES
+//Define a varible to store the sorting items
+const sortBy = reactive({ value: SourceData.sortBy })
+
+//Create an array of sorting items
+const sortByArray = sortBy.value.map((sort) => sort.sortBy)
+
+//Define a reactive variable to store the selected sorting item
+const selectedSortBy = ref('')
+
+//Define a reactive variable to store the sorted movies array
+const sortedMovies = reactive({ value: [] })
+
+//Define a reactive variable to check if data is sorted
+const isSorted = ref(false)
+
+//Define a reactive variable to store the sorting success
+const sortSuccess = ref(false)
+
+//Populating sortedMovies array with movie data as a default
+onMounted(async () => {
+  await fetchMovies(movieOMDBIds, sortedMovies)
+})
+
+//If movie is searched deleting all items in the sortedMovies array and populating it with the search results using helper function updateMoviesArray
+watch(
+  () => searchStore.movieSearched,
+  async (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      await updateMoviesArray(newValue, movieOMDBIds, sortedMovies, searchStore.searchResults)
+    }
+  }
+)
+
+//If movies are filtered deleting all items in the sortedMovies array and populating it with the filtered results using helper function updateMoviesArray
+watch(
+  () => isFiltered.value,
+  async (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      await updateMoviesArray(newValue, movieOMDBIds, sortedMovies, filteredMovies.value)
+    }
+  }
+)
+
+//Function to sort movies by year
+const sortMoviesByYear = () => {
+  sortedMovies.value.sort((a, b) => {
+    return a.Year - b.Year
+  })
+  isSorted.value = true
+  sortSuccess.value = true
+}
+
+//Function to sort movies by title
+const sortMoviesByTitle = () => {
+  sortedMovies.value.sort((a, b) => {
+    return a.Title.localeCompare(b.Title)
+  })
+  isSorted.value = true
+  sortSuccess.value = true
+}
+
+//Function to sort movies by imdbRating rating
+const sortMoviesByRating = () => {
+  if (searchStore.movieSearched) {
+    sortSuccess.value = false
+  } else {
+    sortedMovies.value.sort((a, b) => {
+      return b.imdbRating - a.imdbRating
+    })
+    isSorted.value = true
+    sortSuccess.value = true
+  }
+}
+
+// watch for changes in selectedSortBy
+watch(
+  () => selectedSortBy.value,
+  (newSortValue) => {
+    if (newSortValue === 'Year') {
+      sortMoviesByYear()
+    } else if (newSortValue === 'Title') {
+      sortMoviesByTitle()
+    } else if (newSortValue === 'Rating') {
+      sortMoviesByRating()
+    }
+  }
+)
+
+//Function to clear sorting results
+const clearSortResults = () => {
+  selectedSortBy.value = ''
+  sortedMovies.value.splice(0, sortedMovies.value.length)
+  isSorted.value = false
+}
+
+//END OF SECTION FOR SORTING MOVIES
 </script>
 
 <template>
@@ -141,12 +234,7 @@ const clearFilterResults = () => {
         <FormSelect label="Filter by genre" :options="movieGenresArray" v-model="selectedGenre" />
       </div>
       <div class="col-3">
-        <select class="form-select custom-select border-0" aria-label="Filter by genre">
-          <option selected>Filter by Genre</option>
-          <option value="1">One</option>
-          <option value="2">Two</option>
-          <option value="3">Three</option>
-        </select>
+        <FormSelect label="Sort by" :options="sortByArray" v-model="selectedSortBy" />
       </div>
       <div class="col-6">
         <form @submit.prevent="searchMovies()" class="search-box">
@@ -157,7 +245,7 @@ const clearFilterResults = () => {
     </div>
 
     <!-- Searched movies -->
-    <div class="row" v-if="searchStore.movieSearched">
+    <div class="row" v-if="searchStore.movieSearched && !isSorted">
       <div class="row align-items-center">
         <div class="col-10">
           <h4>Search results</h4>
@@ -187,7 +275,7 @@ const clearFilterResults = () => {
     </div>
 
     <!-- Default list of movies -->
-    <div class="row" v-if="dataLoaded && !searchStore.movieSearched && !isFiltered">
+    <div class="row" v-if="dataLoaded && !searchStore.movieSearched && !isFiltered && !isSorted">
       <div class="row d-flex align-items-stretch">
         <div class="col mt-3 mb-3" v-for="(movieData, index) in movieDataArray.value" :key="index">
           <RouterLink :to="'/movie/' + movieOMDBIds[index]">
@@ -209,7 +297,7 @@ const clearFilterResults = () => {
     <div v-if="!dataLoaded" class="loading">Loading movie list...</div>
 
     <!-- Filtered movies -->
-    <div v-if="isFiltered">
+    <div v-if="isFiltered && !isSorted">
       <div class="row align-items-center">
         <div class="col-10">
           <h4>Filtering results</h4>
@@ -239,6 +327,38 @@ const clearFilterResults = () => {
           </div>
         </div>
         <div v-else class="loading">No results found</div>
+      </div>
+    </div>
+
+    <!-- Sorted movies -->
+    <div v-if="isSorted">
+      <div class="row align-items-center">
+        <div class="col-10">
+          <h4>Sorting results</h4>
+        </div>
+        <div class="col-2 text-right">
+          <button class="btn btn-secondary" @click="clearSortResults">Clear Sorting</button>
+        </div>
+        <div class="row d-flex align-items-stretch" v-if="sortSuccess">
+          <div class="col mt-3 mb-3" v-for="(movieData, index) in sortedMovies.value" :key="index">
+            <RouterLink :to="'/movie/' + movieData.imdbID">
+              <MovieCard
+                :poster="
+                  movieData.Poster === 'N/A'
+                    ? '/src/assets/images/unavailable-image.jpg'
+                    : movieData.Poster
+                "
+                :title="movieData.Title"
+                :text="searchStore.movieSearched ? movieData.Type : movieData.Plot"
+                :year="movieData.Year"
+                :genre="movieData.Genre || 'N/A'"
+              />
+            </RouterLink>
+          </div>
+        </div>
+        <div v-else class="loading">
+          Sorting by Rating in Search results is currently unsupported
+        </div>
       </div>
     </div>
   </div>

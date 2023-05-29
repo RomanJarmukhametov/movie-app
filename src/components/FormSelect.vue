@@ -1,5 +1,4 @@
 <script setup>
-// Import Unique ID generator
 
 const props = defineProps({
   // Label text for the form-select element
@@ -43,7 +42,6 @@ const props = defineProps({
     v-if="props.error"
     class="alert alert-danger"
     role="alert"
-    :id="`${uuid}-error`"
     aria-live="assertive"
   >
     {{ props.error }}
