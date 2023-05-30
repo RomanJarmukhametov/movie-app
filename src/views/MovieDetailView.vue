@@ -1,6 +1,8 @@
 <script setup>
 import { onBeforeMount, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useTitle, useStorage } from '@vueuse/core'
+import RatingStars from '../components/RatingStars.vue'
 
 // Import PostService
 import PostService from '/src/service/PostService.js'
@@ -11,11 +13,24 @@ const route = useRoute()
 
 const dataLoaded = ref(false)
 
+//Define rating initially as null
+let rating = ref(0) // initially set rating to 0
+
+//Store rating in local storage
+const storeRating = (newRating) => {
+  if (rating.value !== null) rating.value = newRating
+}
+
+//Setting page title as a movie title
+const title = useTitle()
+
 onBeforeMount(async () => {
   try {
     const response = await PostService.getFullMovie(route.params.id)
     movie.value = response.data
+    rating.value = useStorage(`rating-${movie.value.imdbID}`, 0)
     dataLoaded.value = true
+    title.value = movie.value.Title
   } catch (error) {
     console.error('Error fetching movie data:', error)
   }
@@ -84,6 +99,11 @@ onBeforeMount(async () => {
             <p class="card-text">
               <span class="title-text">IMDB Rating:</span> {{ movie.value.imdbRating }}
             </p>
+
+            <p class="card-text">
+              <span class="title-text"> Rate this Movie:</span>
+            </p>
+            <RatingStars :grade="rating" :maxStars="5" @update:grade="storeRating" />
           </div>
         </div>
       </div>

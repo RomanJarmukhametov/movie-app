@@ -1,5 +1,10 @@
 <script setup>
 import { RouterView } from 'vue-router'
+import { useTitle } from '@vueuse/core'
+
+const title = useTitle()
+
+title.value = 'Movie App'
 </script>
 
 <template>
