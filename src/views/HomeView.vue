@@ -230,13 +230,13 @@ const clearSortResults = () => {
   <div class="container">
     <!-- Row to display filter, sort and search controls -->
     <div class="row mt-5 mb-5">
-      <div class="col-3">
+      <div class="col-lg-3 col-md-6 col-sm-6 mt-2">
         <FormSelect label="Filter by genre" :options="movieGenresArray" v-model="selectedGenre" />
       </div>
-      <div class="col-3">
+      <div class="col-lg-3 col-md-6 col-sm-6 mt-2">
         <FormSelect label="Sort by" :options="sortByArray" v-model="selectedSortBy" />
       </div>
-      <div class="col-6">
+      <div class="col-lg-6 col-md-12 col-sm-12 mt-2">
         <form @submit.prevent="searchMovies()" class="search-box">
           <input type="text" placeholder="What are you looking for?" v-model="search" />
           <input type="submit" value="Search" />
