@@ -1,12 +1,22 @@
 <script setup>
 import { ref } from 'vue'
 
+import { useRoute } from 'vue-router'
+
+import { useStorage } from '@vueuse/core'
+
+const route = useRoute()
+
+//Define submittedReviews as an empty array initially using useStorage
+const submittedReviews = useStorage(`reviews-${route.params.id}`, [])
+
 const userReview = ref('')
-const submittedReviews = ref([])
 
 const submitReview = () => {
+  // Push the user's review to the submittedReviews array
   submittedReviews.value.push(userReview.value)
-  userReview.value = '' // Clear the input field after submission
+  // Clear the input field after submission
+  userReview.value = ''
 }
 </script>
 
