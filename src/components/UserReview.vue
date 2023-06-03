@@ -1,23 +1,9 @@
 <script setup>
-import { ref } from 'vue'
-
 import { useRoute } from 'vue-router'
-
-import { useStorage } from '@vueuse/core'
+import useReviews from '@/composables/useReviews.js'
 
 const route = useRoute()
-
-//Define submittedReviews as an empty array initially using useStorage
-const submittedReviews = useStorage(`reviews-${route.params.id}`, [])
-
-const userReview = ref('')
-
-const submitReview = () => {
-  // Push the user's review to the submittedReviews array
-  submittedReviews.value.push(userReview.value)
-  // Clear the input field after submission
-  userReview.value = ''
-}
+const { submittedReviews, userReview, submitReview } = useReviews(route.params.id)
 </script>
 
 <template>

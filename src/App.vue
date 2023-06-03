@@ -17,7 +17,21 @@ title.value = 'Movie App'
       </div>
     </div>
   </header>
-  <RouterView />
+  <RouterView class="mb-5" />
+  <footer class="container-fluid mt-5">
+    <div class="row">
+      <div class="col text-center">
+        <h4>
+          Made by
+          <a
+            href="mailto:roman.jarmukhametov@gmail.com
+          </a>"
+            >Roman Jarmukhametov</a
+          >
+        </h4>
+      </div>
+    </div>
+  </footer>
 </template>
 
 <style>
@@ -33,8 +47,14 @@ body {
 
 a {
   text-decoration: none;
+  color: #42b883;
 }
 
+footer {
+  padding: 0.625rem 1rem;
+  background-color: #2c3d4e;
+  box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.1);
+}
 header {
   display: flex;
   align-items: center;
