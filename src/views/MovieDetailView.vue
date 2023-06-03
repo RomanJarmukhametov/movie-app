@@ -1,7 +1,9 @@
 <script setup>
 import { onBeforeMount, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useTitle, useStorage } from '@vueuse/core'
+import { useTitle } from '@vueuse/core'
+
+import useRating from '@/composables/useRating.js'
 
 //Import components
 import RatingStars from '@/components/RatingStars.vue'
@@ -12,17 +14,10 @@ import PostService from '/src/service/PostService.js'
 
 const movie = reactive({ value: {} })
 
-const route = useRoute()
-
 const dataLoaded = ref(false)
 
-//Define rating initially as null
-let rating = useStorage(`rating-${route.params.id}`, 0)
-
-//Store rating in local storage
-const storeRating = (newRating) => {
-  if (rating.value !== null) rating.value = newRating
-}
+const route = useRoute()
+const { rating, storeRating } = useRating(route.params.id)
 
 //Setting page title as a movie title
 const title = useTitle()
